@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const whitelistManager = require('../utils/whitelistManager');
+const broadcastManager = require('../utils/broadcastManager');
 
 const data = new SlashCommandBuilder()
   .setName('해제하기')
@@ -18,26 +19,29 @@ async function execute(interaction) {
 
   try {
     // 화이트리스트에서 제거
-    const result = whitelistManager.removePlayer(nickname);
+    const whitelistResult = whitelistManager.removePlayer(nickname);
 
-    if (!result.success) {
-      if (result.message === 'not_found') {
+    if (!whitelistResult.success) {
+      if (whitelistResult.message === 'not_found') {
         // 등록되지 않은 사용자
         const embed = new EmbedBuilder()
           .setColor('#FF0000') // 빨강색
           .setTitle('화이트리스트 제거 실패!')
-          .setDescription(`\`${result.player}\`은/는 화이트리스트에 없습니다.`);
+          .setDescription(`\`${whitelistResult.player}\`은/는 화이트리스트에 없습니다.`);
 
         await interaction.editReply({ embeds: [embed] });
         return;
       }
     }
 
+    // 방송국 정보에서도 제거
+    broadcastManager.removeBroadcast(nickname);
+
     // 제거 성공
     const embed = new EmbedBuilder()
       .setColor('#00FF00') // 초록색
       .setTitle('화이트리스트 제거 성공!')
-      .setDescription(`\`${result.player}\`을/를 화이트리스트에서 제거했습니다!`);
+      .setDescription(`\`${whitelistResult.player}\`을/를 화이트리스트에서 제거했습니다!`);
 
     await interaction.editReply({ embeds: [embed] });
   } catch (error) {
